@@ -1,16 +1,34 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-buttons slot="start">
+<ion-header [hidden]="!hasGameStarted" [class.show-header]="screenTapped">
+  <ion-toolbar color=tertiary>
+    <!-- <ion-buttons slot="start">
       <ion-menu-button></ion-menu-button>
-    </ion-buttons>
-    <ion-title>
-      Home
+    </ion-buttons> -->
+    <ion-title class="ion-text-center">
+      <ng-container *ngIf=isGamePaused>
+        <ion-icon (click)=playOrPause(1) name="play" class="controller-buttons"></ion-icon>&nbsp;Play
+      </ng-container>
+      <ng-container *ngIf=!isGamePaused>
+        <ion-icon (click)=playOrPause(2) name="pause" class="controller-buttons"></ion-icon>&nbsp;Pause
+      </ng-container>
     </ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
+<ion-content (click)="screenTap()" color="secondary">
   <div id="canvas-container">
-    <video (play)="playing($event)" #video id="video" muted autoplay></video>
+    <video #video id="video" [class.game-not-started]="!hasGameStarted" muted autoplay></video>
+    <img id="player" [class]="phase" [src]="imgSrc[phase]" alt="">
+  </div>
+
+  <div *ngIf="!hasGameStarted" id="busted-area">
+    <h1 *ngIf="isGameOver" id="busted-text">Wasted !!</h1>
+    <div class="restart">
+      <svg class="circle-svg">
+        <circle (click)="startGame()" class="circle" cx="50" cy=50 r=40 />
+        <text *ngIf=isGameOver class="restart-text" x=125 y=63>Restart</text>
+        <text *ngIf=!isGameOver class="restart-text" x=125 y=63>Start</text>
+      </svg>
+      <ion-icon (click)="startGame()" name="triangle" class="play-button"></ion-icon>
+    </div>
   </div>
 </ion-content>

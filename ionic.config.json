@@ -1,5 +1,7 @@
 {
   "name": "face-api-game",
-  "integrations": {},
+  "integrations": {
+    "cordova": {}
+  },
   "type": "angular"
 }

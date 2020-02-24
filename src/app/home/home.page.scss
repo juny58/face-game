@@ -1,4 +1,85 @@
 #video {
+  width: calc(var(--width)/5);
+  height: calc(var(--width)*3/20);
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  z-index: 99;
+  transition: .5s ease-in-out;
+  object-fit: cover;
+}
+.game-not-started {
+  width: 100% !important;
+  height: 100% !important;
+  transition: .5s;
+}
+#player {
   width: 100px;
-  height: 75px;
+  height: 100px;
+  position: fixed;
+  top: calc(var(--height)/2 - 50px + var(--offsetTop));
+  left: 0;
+}
+ion-header {
+  position: absolute;
+  top: -56px;
+  transition: .2s ease-out;
+}
+.show-header {
+  top: 0;
+  transition: .2s ease-in;
+}
+ion-header:not(.show-header)::after {
+  background-image: none !important;
+}
+#busted-area {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  top: 0;
+  left: 0;
+  background: rgba(0,0,0,.55);
+}
+#busted-text {
+  text-align: center;
+  padding: 45px !important;
+  margin: 0 !important;
+  background: rgba(0,0,0,.85);
+  color: red;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  transform: translateY(-50%);
+}
+.restart {
+  position: relative;
+  top: calc(50% + 60px);
+}
+.play-button {
+  position: absolute;
+  left: calc(var(--width)/2 - 65px);
+  top: 30px;
+  color: #9cff2b;
+  font-size: 40px;
+  transform: rotate(90deg);
+}
+.circle-svg {
+  width: 100%;
+  position: relative;
+  left: calc(var(--width)/2 - 100px);
+}
+.circle {
+  fill: transparent;
+  stroke: #9cff2b;
+  stroke-width: 5px;
+}
+.restart-text {
+  fill: #9cff2b;
+  font-size: 26px;
+}
+.controller-buttons {
+  margin-right: 7px;
+  vertical-align: sub;;
 }

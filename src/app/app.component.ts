@@ -29,6 +29,13 @@ export class AppComponent {
     private statusBar: StatusBar
   ) {
     this.initializeApp();
+    document.documentElement.style.setProperty("--width", `${window.innerWidth}px`)
+    document.documentElement.style.setProperty("--height", `${window.innerHeight}px`)
+    
+    window.onresize = () => {
+      document.documentElement.style.setProperty("--width", `${window.innerWidth}px`)
+      document.documentElement.style.setProperty("--height", `${window.innerHeight}px`)
+    }
   }
 
   initializeApp() {
