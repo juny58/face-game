@@ -15,10 +15,8 @@ declare var faceapi
 })
 export class HomePage implements AfterViewInit {
 
-  faceObserver = interval(100)
-  faceObserverSubscription
-  obstacleCreateTimeGap = 3500
-  obstacleObserver = interval(this.obstacleCreateTimeGap)
+  faceApiWorker: Worker
+  obstacleCreateTimeGap = 2500
   isGameOver = false
   expression
   canvasElement
@@ -29,7 +27,7 @@ export class HomePage implements AfterViewInit {
     ducking: "assets/running-lied.png"
   }
   inTransition = false
-  obstacleObserverSubscription: Subscription
+  obstacleWorker: Worker
   components: Array<Obstacle> = []
   screenTapped = false
   hasGameStarted = false
@@ -52,7 +50,7 @@ export class HomePage implements AfterViewInit {
           Canvas: HTMLCanvasElement,
           Image: HTMLImageElement,
           ImageData: ImageData,
-          Video: HTMLVideoElement,
+          //Video: HTMLVideoElement,
           readFile: (path) => {
             return new Promise((resolve, reject) => {
               file.resolveLocalFilesystemUrl(path).then(fileEntry => {
@@ -85,7 +83,7 @@ export class HomePage implements AfterViewInit {
           createImageElement: () => document.createElement("img")
         })
       }
-      this.loadFaceApi()
+      //this.loadFaceApi()
     })
   }
 
@@ -108,20 +106,37 @@ export class HomePage implements AfterViewInit {
 
   loadFaceApi() {
     //console.log(faceapi)
-    let url = this.file.applicationDirectory + "www/assets/models/"
-    Promise.all([
-      faceapi.nets.tinyFaceDetector.loadFromDisk(url),
-      //faceapi.nets.faceLandmark68Net.loadFromDisk(url),
-      //faceapi.nets.faceRecognitionNet.loadFromDisk(url),
-      faceapi.nets.faceExpressionNet.loadFromDisk(url)
-    ]).then((res) => {
-      // console.log(res)
-      console.log("Success loading models", res)
-      this.startVideo()
-    })
-      .catch(err => {
-        console.log("Error in loading model => ", err)
+    let deviceUrl = this.file.applicationDirectory + "www/assets/models/"
+    let webUrl = "assets/models/"
+    if (this.isAndroid) {
+      Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromDisk(deviceUrl),
+        //faceapi.nets.faceLandmark68Net.loadFromDisk(url),
+        //faceapi.nets.faceRecognitionNet.loadFromDisk(url),
+        faceapi.nets.faceExpressionNet.loadFromDisk(deviceUrl)
+      ]).then((res) => {
+        // console.log(res)
+        console.log("Success loading models", res)
+        this.startVideo()
       })
+        .catch(err => {
+          console.log("Error in loading model => ", err)
+        })
+    } else {
+      Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri(webUrl),
+        //faceapi.nets.faceLandmark68Net.loadFromUri(webUrl),
+        //faceapi.nets.faceRecognitionNet.loadFromUri(webUrl),
+        faceapi.nets.faceExpressionNet.loadFromUri(webUrl)
+      ]).then((res) => {
+        // console.log(res)
+        //console.log("Success loading models", res)
+        this.startVideo()
+      })
+        .catch(err => {
+          console.log("Error in loading model => ", err)
+        })
+    }
   }
 
   startVideo() {
@@ -160,22 +175,7 @@ export class HomePage implements AfterViewInit {
     }
     this.components = []
     this.createComponents()
-
-    this.faceObserverSubscription = this.faceObserver.subscribe(() => {
-      faceapi.detectSingleFace(this.videoElement.nativeElement, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions().then(result => {
-        if (result) {
-          //console.log(result)
-          let values: Array<number> = Object.values(result.expressions)
-          let keys = Object.keys(result.expressions)
-          let i = values.indexOf(Math.max(...values))
-          //console.log(values)
-          if (keys[i] != this.expression) {
-            this.expression = keys[i]
-            this.gameActivity(values[i])
-          }
-        }
-      })
-    })
+    this.runWebWorkerForFaceApi()
   }
 
   ngAfterViewInit() {
@@ -184,20 +184,21 @@ export class HomePage implements AfterViewInit {
   }
 
   createComponents() {
-    let posFn = () => {
-      let rand = Math.random()
-      if (rand > 0.5) {
-        this.drawObstructions(1)
-      } else {
-        this.drawObstructions(2)
-      }
-    }
-    posFn()
+    // let posFn = () => {
+    //   let rand = Math.random()
+    //   if (rand > 0.5) {
+    //     this.drawObstructions(1)
+    //   } else {
+    //     this.drawObstructions(2)
+    //   }
+    // }
+    // posFn()
 
-    this.obstacleObserverSubscription = this.obstacleObserver.subscribe(data => {
-      this.lastCreatedTime = new Date
-      posFn()
-    })
+    // this.obstacleObserverSubscription = this.obstacleObserver.subscribe(data => {
+    //   this.lastCreatedTime = new Date
+    //   posFn()
+    // })
+    this.runWebWorkerForCreateComponent()
   }
 
   gameActivity(v) {
@@ -284,8 +285,8 @@ export class HomePage implements AfterViewInit {
       //console.log(obstacleComponent)
       if (e.isGameOver) {
         this.isGameOver = true
-        this.faceObserverSubscription.unsubscribe()
-        this.obstacleObserverSubscription.unsubscribe()
+        this.faceApiWorker.terminate()
+        this.obstacleWorker.terminate()
         this.stopComponentPropagation()
         setTimeout(() => {
           this.hasGameStarted = false
@@ -331,11 +332,52 @@ export class HomePage implements AfterViewInit {
       })
     } else {
       this.isGamePaused = true
-      this.obstacleObserverSubscription.unsubscribe()
+      this.obstacleWorker.terminate()
       this.components.map(o => {
         o.pauseGame()
       })
     }
+  }
+
+  runWebWorkerForFaceApi() {
+    if (typeof Worker !== 'undefined') {
+      // Create a new
+      this.faceApiWorker = new Worker('./interval.worker', { type: 'module' });
+      this.faceApiWorker.onmessage = ({ data }) => {
+        //console.log(`page got message: ${data}`);
+        this.faceApiInit()
+      };
+      this.faceApiWorker.postMessage(100);
+    } else {
+      // Web workers are not supported in this environment.
+      // You should add a fallback so that your program still executes correctly.
+    }
+  }
+
+  faceApiInit() {
+    faceapi.detectSingleFace(this.videoElement.nativeElement, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions().then(result => {
+      if (result) {
+        //console.log(result)
+        let values: Array<number> = Object.values(result.expressions)
+        let keys = Object.keys(result.expressions)
+        let i = values.indexOf(Math.max(...values))
+        //console.log(values)
+        if (keys[i] != this.expression) {
+          this.expression = keys[i]
+          this.gameActivity(values[i])
+        }
+      }
+    })
+  }
+
+  runWebWorkerForCreateComponent() {
+    this.obstacleWorker = new Worker('./home.worker', { type: 'module' });
+    this.obstacleWorker.onmessage = ({ data }) => {
+      //console.log(`page got message: ${data}`);
+      this.lastCreatedTime = new Date;
+      this.drawObstructions(data)
+    };
+    this.obstacleWorker.postMessage(this.obstacleCreateTimeGap);
   }
 
 }

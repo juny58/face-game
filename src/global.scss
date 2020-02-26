@@ -26,9 +26,10 @@
 @import "~@ionic/angular/css/flex-utils.css";
 
 .obstacles {
-    width: 50px;
-    height: 50px;
+    width: 30px;
+    height: 30px;
     position: fixed;
+    border: 1px solid red;
     // animation-name: obstacle;
     // animation-duration: var(--time);
     // animation-iteration-count: 1;
@@ -37,5 +38,5 @@
     top: calc(var(--height)/2 - 50px)
 }
 .obstacle-bottom {
-    top: calc(var(--height)/2 )
+    top: calc(var(--height)/2 + 20px)
 }

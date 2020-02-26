@@ -16,40 +16,50 @@ export class Obstacle {
 
     playerElement
     gameOverCallBack: Function
-    updateArea = interval(20)
-    updateAreaSubscription: Subscription
     componentEndCallback: Function
     rightOffset: number = -50
+    private worker: Worker
+    obstacleOffsetTop
 
     constructor(public parent: HTMLElement, public obstacleType: string) {
         this.baseElement = document.createElement("img")
         this.baseElement.src = this.obstacleObj[obstacleType].asset
         this.baseElement.classList.add('obstacles', this.obstacleObj[this.obstacleType].class)
         this.baseElement.style.right = `${this.rightOffset}px`
-        parent.appendChild(this.baseElement);
-        this.updateElement()
         this.playerElement = this.parent.querySelector("#player")
+        this.obstacleOffsetTop = window.innerHeight / 2
+        parent.appendChild(this.baseElement);
+        this.runWbWorkerForUpdateElement()
     }
 
     updateElement() {
-        this.updateAreaSubscription = this.updateArea.subscribe(() => {
-            this.rightOffset += 2
-            //console.log(this.playerElement.offsetHeight, this.playerElement.offsetLeft)
-            if (this.rightOffset <= window.innerWidth) {
-                this.baseElement.style.right = `${this.rightOffset}px`
-                let top = 200
-                let left = window.innerWidth - (this.rightOffset + 50)
-                if (left < 100 && top > this.playerElement.offsetTop) {
+        //this.updateAreaSubscription = this.updateArea.subscribe(() => {
+        this.rightOffset += 4
+        //console.log(this.playerElement.offsetHeight, this.playerElement.offsetLeft)
+        if (this.rightOffset <= window.innerWidth) {
+            this.baseElement.style.right = `${this.rightOffset}px`
+            let left = window.innerWidth - (this.rightOffset + 30)
+            if (this.obstacleType == 'top') {
+                if (left < 100 && (this.obstacleOffsetTop - 20) >= this.playerElement.offsetTop) {
                     //console.log("Yaaayy!! Collision...")
+                    //console.log(this.playerElement.offsetTop)
                     this.gameOverCallBack({ isGameOver: true })
-                    this.updateAreaSubscription.unsubscribe()
+                    this.worker.terminate()
                 }
             } else {
-                this.updateAreaSubscription.unsubscribe()
-                this.parent.removeChild(this.baseElement)
-                this.componentEndCallback()
+                if (left < 100 && (this.obstacleOffsetTop + 20) <= (this.playerElement.offsetTop + 100)) {
+                    //console.log("Yaaayy!! Collision...")
+                    //console.log(this.playerElement.offsetTop)
+                    this.gameOverCallBack({ isGameOver: true })
+                    this.worker.terminate()
+                }
             }
-        })
+        } else {
+            this.worker.terminate()
+            this.baseElement.remove()
+            this.componentEndCallback()
+        }
+        //})
     }
 
     onGameOver(cb: CallableFunction) {
@@ -61,17 +71,27 @@ export class Obstacle {
     }
 
     pauseGame() {
-        console.log("Stop called from parent")
-        this.updateAreaSubscription.unsubscribe()
+        //console.log("Stop called from parent")
+        this.worker.terminate()
     }
 
     resumeGame() {
-        console.log("Resume called from parent")
-        this.updateElement()
+        //console.log("Resume called from parent")
+        this.runWbWorkerForUpdateElement()
     }
 
     destroyComponent() {
-        this.parent.removeChild(this.baseElement)
+        //console.log(this.baseElement)
+        this.baseElement.remove()
+    }
+
+    runWbWorkerForUpdateElement() {
+        this.worker = new Worker('./interval.worker', { type: 'module' });
+        this.worker.onmessage = ({ data }) => {
+            //console.log(`page got message: ${data}`);
+            this.updateElement()
+        };
+        this.worker.postMessage(20);
     }
 }
 

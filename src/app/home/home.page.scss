@@ -19,6 +19,7 @@
   position: fixed;
   top: calc(var(--height)/2 - 50px + var(--offsetTop));
   left: 0;
+  border: 1px solid red;
 }
 ion-header {
   position: absolute;
@@ -82,4 +83,16 @@ ion-header:not(.show-header)::after {
 .controller-buttons {
   margin-right: 7px;
   vertical-align: sub;;
+}
+.controllers {
+  position: fixed;
+  bottom: 0;
+  font-size: 25px;
+  z-index: 9999;
+}
+.up {
+  right: 50px
+}
+.down {
+  right: 0
 }

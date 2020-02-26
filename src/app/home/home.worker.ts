@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 
 addEventListener('message', ({ data }) => {
-  setInterval(() => {
+  let compFn = () => {
     let rand = Math.random()
     let val
     if (rand > 0.5) {
@@ -10,5 +10,8 @@ addEventListener('message', ({ data }) => {
       val = 2
     }
     postMessage(val);
-  }, 4000)
+  }
+  setInterval(() => {
+    compFn()
+  }, data)
 });
