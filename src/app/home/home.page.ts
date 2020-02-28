@@ -5,8 +5,6 @@ import { Platform } from '@ionic/angular';
 import { Diagnostic } from '@ionic-native/diagnostic/ngx';
 import { ScreenOrientation } from '@ionic-native/screen-orientation/ngx';
 import { HttpClient } from '@angular/common/http';
-import { File } from '@ionic-native/file/ngx';
-import { SpeechRecognition } from '@ionic-native/speech-recognition/ngx';
 declare var faceapi
 declare var speechCommands
 
@@ -41,7 +39,7 @@ export class HomePage implements AfterViewInit {
   @ViewChild("video", { read: ElementRef, static: true }) videoElement: ElementRef
   startTime: number;
 
-  constructor(public speechRecognition: SpeechRecognition, public file: File, public httpClient: HttpClient, public elementRef: ElementRef, public platform: Platform, public diagnostic: Diagnostic, public screenOrientation: ScreenOrientation) {
+  constructor(public httpClient: HttpClient, public elementRef: ElementRef, public platform: Platform, public diagnostic: Diagnostic, public screenOrientation: ScreenOrientation) {
     this.platform.ready().then(() => {
       //console.log(file.applicationDirectory)
       let platforms = this.platform.platforms()
