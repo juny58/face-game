@@ -6,7 +6,9 @@ import { Diagnostic } from '@ionic-native/diagnostic/ngx';
 import { ScreenOrientation } from '@ionic-native/screen-orientation/ngx';
 import { HttpClient } from '@angular/common/http';
 import { File } from '@ionic-native/file/ngx';
+import { SpeechRecognition } from '@ionic-native/speech-recognition/ngx';
 declare var faceapi
+declare var speechCommands
 
 @Component({
   selector: 'app-home',
@@ -15,10 +17,8 @@ declare var faceapi
 })
 export class HomePage implements AfterViewInit {
 
-  faceApiWorker: Worker
   obstacleCreateTimeGap = 2500
   isGameOver = false
-  expression
   canvasElement
   phase = "normal"
   imgSrc = {
@@ -35,55 +35,21 @@ export class HomePage implements AfterViewInit {
   backButtonSub: Subscription
   lastCreatedTime: Date
   isAndroid = false
+  recognizer
+  modelLoaded: ModelLoaded = 0
 
   @ViewChild("video", { read: ElementRef, static: true }) videoElement: ElementRef
+  startTime: number;
 
-  constructor(public file: File, public httpClient: HttpClient, public elementRef: ElementRef, public platform: Platform, public diagnostic: Diagnostic, public screenOrientation: ScreenOrientation) {
+  constructor(public speechRecognition: SpeechRecognition, public file: File, public httpClient: HttpClient, public elementRef: ElementRef, public platform: Platform, public diagnostic: Diagnostic, public screenOrientation: ScreenOrientation) {
     this.platform.ready().then(() => {
       //console.log(file.applicationDirectory)
       let platforms = this.platform.platforms()
       if (platforms.indexOf('android') >= 0 && platforms.indexOf('mobileweb') == -1) {
         this.isAndroid = true
       }
-      if (this.isAndroid) {
-        faceapi.env.monkeyPatch({
-          Canvas: HTMLCanvasElement,
-          Image: HTMLImageElement,
-          ImageData: ImageData,
-          //Video: HTMLVideoElement,
-          readFile: (path) => {
-            return new Promise((resolve, reject) => {
-              file.resolveLocalFilesystemUrl(path).then(fileEntry => {
-                //console.log(`File found ${fileEntry['file']}`)
-                //console.log(`File path => ${path}`)
-                fileEntry['file'](file => {
-                  var reader = new FileReader()
-                  let fileExtension = path.split("?")[0].split(".").pop();
-                  if (fileExtension === "json") {
-                    reader.onloadend = (e) => {
-                      //console.log("JSON file => ", e)
-                      return resolve(e.target['_result']);
-                    };
-                    reader.readAsText(file);
-                  } else {
-                    reader.onloadend = (e: any) => {
-                      //console.log("Unit file => ", e)
-                      return resolve(new Uint8Array(e.target['_result']))
-                    }
-                    reader.readAsArrayBuffer(file);
-                  }
-                })
-              }).catch(err => {
-                console.log("Patching error => ", err)
-                return reject("Patching error => " + err)
-              })
-            })
-          },
-          createCanvasElement: () => document.createElement("canvas"),
-          createImageElement: () => document.createElement("img")
-        })
-      }
-      //this.loadFaceApi()
+      this.startVideo()
+      this.listenForCommands()
     })
   }
 
@@ -102,41 +68,6 @@ export class HomePage implements AfterViewInit {
     this.backButtonSub.unsubscribe()
     this.screenOrientation.unlock()
     this.playOrPause(2)
-  }
-
-  loadFaceApi() {
-    //console.log(faceapi)
-    let deviceUrl = this.file.applicationDirectory + "www/assets/models/"
-    let webUrl = "assets/models/"
-    if (this.isAndroid) {
-      Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromDisk(deviceUrl),
-        //faceapi.nets.faceLandmark68Net.loadFromDisk(url),
-        //faceapi.nets.faceRecognitionNet.loadFromDisk(url),
-        faceapi.nets.faceExpressionNet.loadFromDisk(deviceUrl)
-      ]).then((res) => {
-        // console.log(res)
-        console.log("Success loading models", res)
-        this.startVideo()
-      })
-        .catch(err => {
-          console.log("Error in loading model => ", err)
-        })
-    } else {
-      Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri(webUrl),
-        //faceapi.nets.faceLandmark68Net.loadFromUri(webUrl),
-        //faceapi.nets.faceRecognitionNet.loadFromUri(webUrl),
-        faceapi.nets.faceExpressionNet.loadFromUri(webUrl)
-      ]).then((res) => {
-        // console.log(res)
-        //console.log("Success loading models", res)
-        this.startVideo()
-      })
-        .catch(err => {
-          console.log("Error in loading model => ", err)
-        })
-    }
   }
 
   startVideo() {
@@ -165,17 +96,32 @@ export class HomePage implements AfterViewInit {
   }
 
   startGame() {
-    this.hasGameStarted = true
-    this.isGamePaused = false
-    if (this.components.length) {
-      this.components.map(c => {
-        c.destroyComponent()
-        c = null
-      })
+    if (!this.startTime) {
+      this.startTime = (new Date).getMilliseconds()
     }
-    this.components = []
-    this.createComponents()
-    this.runWebWorkerForFaceApi()
+    if (this.modelLoaded == 1) {
+      this.hasGameStarted = true
+      this.isGamePaused = false
+      if (this.components.length) {
+        this.components.map(c => {
+          c.destroyComponent()
+          c = null
+        })
+      }
+      this.components = []
+      this.startTime = null
+      this.createComponents()
+    } else {
+      if (((new Date).getMilliseconds() - this.startTime) > 10000) {
+        alert("Sorry, your connection is too slow.")
+      } else {
+        if (this.modelLoaded == 0) {
+          this.startGame()
+        } else {
+          alert("Sorry, your connection is too slow.")
+        }
+      }
+    }
   }
 
   ngAfterViewInit() {
@@ -183,27 +129,35 @@ export class HomePage implements AfterViewInit {
     this.setCurrentPlayerPositionCssVariable('0px')
   }
 
-  createComponents() {
-    // let posFn = () => {
-    //   let rand = Math.random()
-    //   if (rand > 0.5) {
-    //     this.drawObstructions(1)
-    //   } else {
-    //     this.drawObstructions(2)
-    //   }
-    // }
-    // posFn()
+  async listenForCommands() {
+    this.recognizer = speechCommands.create('BROWSER_FFT');
+    try {
+      await this.recognizer.ensureModelLoaded();
+      let words = this.recognizer.wordLabels()
+      //console.log(words)
+      this.modelLoaded = 1
+      this.recognizer.listen(({ scores }) => {
+        scores = Array.from(scores).map((s, i) => ({ score: s, word: words[i] }));
+        // Find the most probable word.
+        scores.sort((s1, s2) => s2.score - s1.score);
+        //console.log(scores[0])
+        //console.log(word)
+        if (this.hasGameStarted && scores[0].score > .9) {
+          this.gameActivity(scores[0].word)
+        }
+      }, { probabilityThreshold: 0.5 })
+    } catch {
+      this.modelLoaded = 2
+    }
+  }
 
-    // this.obstacleObserverSubscription = this.obstacleObserver.subscribe(data => {
-    //   this.lastCreatedTime = new Date
-    //   posFn()
-    // })
+  createComponents() {
     this.runWebWorkerForCreateComponent()
   }
 
-  gameActivity(v) {
+  gameActivity(direction: string) {
     //console.log(this.expression)
-    if (this.expression == 'happy' && !this.inTransition && v > 0.65) {
+    if (direction == 'up' && !this.inTransition) {
       //console.log(v)
       this.phase = "bouncing"
       this.inTransition = true
@@ -212,7 +166,7 @@ export class HomePage implements AfterViewInit {
         this.inTransition = false
         this.phase = "normal"
       }, 2000);
-    } else if (this.expression == 'surprised' || this.expression == 'angry' && !this.inTransition && v > 0.75) {
+    } else if (direction == 'down' && !this.inTransition) {
       //console.log(v)
       this.phase = "ducking"
       this.inTransition = true
@@ -285,7 +239,6 @@ export class HomePage implements AfterViewInit {
       //console.log(obstacleComponent)
       if (e.isGameOver) {
         this.isGameOver = true
-        this.faceApiWorker.terminate()
         this.obstacleWorker.terminate()
         this.stopComponentPropagation()
         setTimeout(() => {
@@ -339,37 +292,6 @@ export class HomePage implements AfterViewInit {
     }
   }
 
-  runWebWorkerForFaceApi() {
-    if (typeof Worker !== 'undefined') {
-      // Create a new
-      this.faceApiWorker = new Worker('./interval.worker', { type: 'module' });
-      this.faceApiWorker.onmessage = ({ data }) => {
-        //console.log(`page got message: ${data}`);
-        this.faceApiInit()
-      };
-      this.faceApiWorker.postMessage(100);
-    } else {
-      // Web workers are not supported in this environment.
-      // You should add a fallback so that your program still executes correctly.
-    }
-  }
-
-  faceApiInit() {
-    faceapi.detectSingleFace(this.videoElement.nativeElement, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions().then(result => {
-      if (result) {
-        //console.log(result)
-        let values: Array<number> = Object.values(result.expressions)
-        let keys = Object.keys(result.expressions)
-        let i = values.indexOf(Math.max(...values))
-        //console.log(values)
-        if (keys[i] != this.expression) {
-          this.expression = keys[i]
-          this.gameActivity(values[i])
-        }
-      }
-    })
-  }
-
   runWebWorkerForCreateComponent() {
     this.obstacleWorker = new Worker('./home.worker', { type: 'module' });
     this.obstacleWorker.onmessage = ({ data }) => {
@@ -380,4 +302,10 @@ export class HomePage implements AfterViewInit {
     this.obstacleWorker.postMessage(this.obstacleCreateTimeGap);
   }
 
+}
+
+export enum ModelLoaded {
+  "NotFailed" = 0,
+  "Loaded" = 1,
+  "LoadFailed" = 2
 }

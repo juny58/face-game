@@ -11,6 +11,7 @@ import { ScreenOrientation } from '@ionic-native/screen-orientation/ngx';
 import { Diagnostic } from '@ionic-native/diagnostic/ngx';
 import { File } from '@ionic-native/file/ngx';
 import * as firebase from 'firebase'
+import { SpeechRecognition } from '@ionic-native/speech-recognition/ngx';
 
 var firebaseConfig = {
   apiKey: "AIzaSyCqr9Sn5diMteVQ2mp5nXCB7ohJ_NMooUQ",
@@ -40,6 +41,7 @@ firebase.initializeApp(firebaseConfig);
     ScreenOrientation,
     Diagnostic,
     File,
+    SpeechRecognition,
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }
   ],
   bootstrap: [AppComponent]
