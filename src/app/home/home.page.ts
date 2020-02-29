@@ -4,8 +4,7 @@ import { Obstacle, GameOverEvent } from './obstacle';
 import { Platform } from '@ionic/angular';
 import { Diagnostic } from '@ionic-native/diagnostic/ngx';
 import { ScreenOrientation } from '@ionic-native/screen-orientation/ngx';
-import { HttpClient } from '@angular/common/http';
-declare var faceapi
+import { SplashScreen } from '@ionic-native/splash-screen/ngx';
 declare var speechCommands
 
 @Component({
@@ -39,15 +38,29 @@ export class HomePage implements AfterViewInit {
   @ViewChild("video", { read: ElementRef, static: true }) videoElement: ElementRef
   startTime: number;
 
-  constructor(public httpClient: HttpClient, public elementRef: ElementRef, public platform: Platform, public diagnostic: Diagnostic, public screenOrientation: ScreenOrientation) {
+  constructor(public splashScreen: SplashScreen, public elementRef: ElementRef, public platform: Platform, public diagnostic: Diagnostic, public screenOrientation: ScreenOrientation) {
     this.platform.ready().then(() => {
       //console.log(file.applicationDirectory)
       let platforms = this.platform.platforms()
+      //console.log(platforms);
+
+      this.splashScreen.hide();
+
       if (platforms.indexOf('android') >= 0 && platforms.indexOf('mobileweb') == -1) {
         this.isAndroid = true
       }
-      this.startVideo()
-      this.listenForCommands()
+      if (this.isAndroid) {
+        this.diagnostic.requestRuntimePermissions([this.diagnostic.permission.CAMERA, this.diagnostic.permission.RECORD_AUDIO]).then(status => {
+          // console.log("Permission status", status)
+          if (this.diagnostic.permissionStatus.GRANTED) {
+            this.startVideo()
+            this.listenForCommands()
+          }
+        })
+      } else {
+        this.startVideo()
+        this.listenForCommands()
+      }
     })
   }
 
@@ -69,28 +82,14 @@ export class HomePage implements AfterViewInit {
   }
 
   startVideo() {
-    if (this.isAndroid) {
-      this.diagnostic.requestRuntimePermission(this.diagnostic.permission.CAMERA).then(status => {
-        // console.log("Permission status", status)
-        if (this.diagnostic.permissionStatus.GRANTED) {
-          navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
-            this.videoElement.nativeElement.srcObject = stream
-            console.log("Stream is => ", stream)
-          }, err => {
-            console.log("Usermedia error => ", err)
-          })
-        }
-      }).catch((err) => {
-        //console.log("Permission error => ", err)
-      })
-    } else {
-      navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
-        this.videoElement.nativeElement.srcObject = stream
-        // console.log("Stream is => ", stream)
-      }, err => {
-        //console.log("Usermedia error => ", err)
-      })
-    }
+    //console.log(this.isAndroid)
+
+    navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+      this.videoElement.nativeElement.srcObject = stream
+      //console.log("Stream is => ", stream)
+    }, err => {
+      console.log("Usermedia error => ", err)
+    })
   }
 
   startGame() {
@@ -100,10 +99,13 @@ export class HomePage implements AfterViewInit {
     if (this.modelLoaded == 1) {
       this.hasGameStarted = true
       this.isGamePaused = false
+      //console.log(this.components)
       if (this.components.length) {
         this.components.map(c => {
           c.destroyComponent()
-          c = null
+          setTimeout(() => {
+            c = null
+          });
         })
       }
       this.components = []
@@ -114,7 +116,9 @@ export class HomePage implements AfterViewInit {
         alert("Sorry, your connection is too slow.")
       } else {
         if (this.modelLoaded == 0) {
-          this.startGame()
+          setTimeout(() => {
+            this.startGame()
+          }, 100);
         } else {
           alert("Sorry, your connection is too slow.")
         }
@@ -187,7 +191,7 @@ export class HomePage implements AfterViewInit {
     let hitOffset = false
     let int = interval(20).subscribe(() => {
       if (offset < 100 && !hitOffset) {
-        offset += 2
+        offset += 4
         if (offset == 100) {
           hitOffset = true
         }
@@ -206,7 +210,7 @@ export class HomePage implements AfterViewInit {
     let hitOffset = false
     let int = interval(20).subscribe(() => {
       if (offset > -100 && !hitOffset) {
-        offset -= 2
+        offset -= 4
         if (offset == -100) {
           hitOffset = true
         }

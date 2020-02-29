@@ -2,7 +2,7 @@ import { interval, Subscription } from 'rxjs'
 
 export class Obstacle {
 
-    baseElement
+    baseElement: HTMLImageElement
     obstacleObj = {
         top: {
             asset: "assets/arrow.png",
@@ -82,7 +82,8 @@ export class Obstacle {
 
     destroyComponent() {
         //console.log(this.baseElement)
-        this.baseElement.remove()
+        //this.baseElement.remove()
+        this.parent.removeChild(this.baseElement)
     }
 
     runWbWorkerForUpdateElement() {
