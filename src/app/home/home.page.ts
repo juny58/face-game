@@ -1,5 +1,5 @@
 import { Component, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
-import { interval, Subscription, from } from 'rxjs';
+import { interval,Subscription } from 'rxjs';
 import { Obstacle, GameOverEvent } from './obstacle';
 import { Platform } from '@ionic/angular';
 import { Diagnostic } from '@ionic-native/diagnostic/ngx';
@@ -34,6 +34,7 @@ export class HomePage implements AfterViewInit {
   isAndroid = false
   recognizer
   modelLoaded: ModelLoaded = 0
+  score: number = 0
 
   @ViewChild("video", { read: ElementRef, static: true }) videoElement: ElementRef
   startTime: number;
@@ -106,12 +107,13 @@ export class HomePage implements AfterViewInit {
           c = null
         })
         let els = document.getElementsByClassName("obstacles")
-        Array.from(els).forEach(el=>{
+        Array.from(els).forEach(el => {
           el.parentNode.removeChild(el)
         })
       }
       this.components = []
       this.startTime = null
+      this.score = 0
       this.createComponents()
     } else {
       if ((Date.now() - this.startTime) > 10000) {
@@ -253,6 +255,7 @@ export class HomePage implements AfterViewInit {
 
     obstacleComponent.onComponentEnd(() => {
       //console.log("Component ended")
+      this.score += 33
       setTimeout(() => {
         obstacleComponent = null
         let i = this.components.indexOf(null)

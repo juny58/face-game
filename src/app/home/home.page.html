@@ -20,6 +20,10 @@
     <img id="player" [class]="phase" [src]="imgSrc[phase]" alt="">
   </div>
 
+  <div class="score">
+    <b class="score-label">Score:</b><span class="score-number">{{score}}</span>
+  </div>
+
   <div *ngIf="!hasGameStarted" id="busted-area">
     <h1 *ngIf="isGameOver" id="busted-text">Wasted !!</h1>
     <div class="restart">

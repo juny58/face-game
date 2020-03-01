@@ -96,3 +96,18 @@ ion-header:not(.show-header)::after {
 .down {
   right: 0
 }
+.score {
+  position: fixed;
+  top: 0;
+  right: 0;
+  padding: 15px;
+  z-index: 999999999;
+}
+.score-label {
+  color: #9cff2b;
+  text-transform: uppercase;
+  margin-right: 10px;
+}
+.score-number {
+  color: #fff;
+}
