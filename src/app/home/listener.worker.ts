@@ -1,6 +1,5 @@
 /// <reference lib="webworker" />
-let words = ["_background_noise_", "_unknown_", "down", "eight", "five", "four", "go", "left", "nine", "no", "one", "right", "seven", "six", "stop", "three", "two", "up", "yes", "zero"]
-
+let words = ["down", "left", "right", "up", "_background_noise_", "_unknown_"]
 addEventListener('message', ({ data }) => {
   //console.log(data)
   // Find the most probable word.

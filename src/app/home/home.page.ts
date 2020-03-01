@@ -136,9 +136,10 @@ export class HomePage implements AfterViewInit {
   }
 
   async listenForCommands() {
-    this.recognizer = speechCommands.create('BROWSER_FFT');
+    this.recognizer = speechCommands.create('BROWSER_FFT', 'directional4w');
     try {
       await this.recognizer.ensureModelLoaded();
+      //console.log(this.recognizer.wordLabels())
       this.modelLoaded = 1
       let listenerWorker = new Worker("./listener.worker.ts", { type: 'module' })
       this.recognizer.listen(({ scores }) => {
@@ -162,7 +163,7 @@ export class HomePage implements AfterViewInit {
 
   gameActivity(direction: string) {
     //console.log(this.expression)
-    if ((direction == 'up' || direction == 'stop') && !this.inTransition) { // they sound similar
+    if (direction == 'up' && !this.inTransition) { // they sound similar
       //console.log(v)
       this.phase = "bouncing"
       this.inTransition = true
@@ -171,7 +172,7 @@ export class HomePage implements AfterViewInit {
         this.inTransition = false
         this.phase = "normal"
       }, 2000);
-    } else if ((direction == 'down' || direction == 'nine') && !this.inTransition) { // they sound similar
+    } else if (direction == 'down' && !this.inTransition) { // they sound similar
       //console.log(v)
       this.phase = "ducking"
       this.inTransition = true
