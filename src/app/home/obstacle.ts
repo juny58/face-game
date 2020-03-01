@@ -45,6 +45,7 @@ export class Obstacle {
                     //console.log("Yaaayy!! Collision...")
                     //console.log(this.playerElement.offsetTop)
                     this.gameOverCallBack({ isGameOver: true })
+                    this.worker.postMessage(null)
                     this.worker.terminate()
                 }
             } else {
@@ -52,6 +53,7 @@ export class Obstacle {
                     //console.log("Yaaayy!! Collision...")
                     //console.log(this.playerElement.offsetTop)
                     this.gameOverCallBack({ isGameOver: true })
+                    this.worker.postMessage(null)
                     this.worker.terminate()
                 }
             }
