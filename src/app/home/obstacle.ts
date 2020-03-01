@@ -25,6 +25,7 @@ export class Obstacle {
         this.baseElement = document.createElement("img")
         this.baseElement.src = this.obstacleObj[obstacleType].asset
         this.baseElement.classList.add('obstacles', this.obstacleObj[this.obstacleType].class)
+        this.baseElement.id = Date.now().toString()
         this.baseElement.style.right = `${this.rightOffset}px`
         this.playerElement = this.parent.querySelector("#player")
         this.obstacleOffsetTop = window.innerHeight / 2
@@ -40,14 +41,14 @@ export class Obstacle {
             this.baseElement.style.right = `${this.rightOffset}px`
             let left = window.innerWidth - (this.rightOffset + 30)
             if (this.obstacleType == 'top') {
-                if (left < 100 && (this.obstacleOffsetTop - 20) >= this.playerElement.offsetTop) {
+                if (left < 90 && (this.obstacleOffsetTop - 20) >= this.playerElement.offsetTop) { // 10px buffer distance as img has about 10px padding
                     //console.log("Yaaayy!! Collision...")
                     //console.log(this.playerElement.offsetTop)
                     this.gameOverCallBack({ isGameOver: true })
                     this.worker.terminate()
                 }
             } else {
-                if (left < 100 && (this.obstacleOffsetTop + 20) <= (this.playerElement.offsetTop + 100)) {
+                if (left < 90 && (this.obstacleOffsetTop + 20) <= (this.playerElement.offsetTop + 100)) { // 10px buffer distance as img has about 10px padding
                     //console.log("Yaaayy!! Collision...")
                     //console.log(this.playerElement.offsetTop)
                     this.gameOverCallBack({ isGameOver: true })
@@ -78,12 +79,6 @@ export class Obstacle {
     resumeGame() {
         //console.log("Resume called from parent")
         this.runWbWorkerForUpdateElement()
-    }
-
-    destroyComponent() {
-        //console.log(this.baseElement)
-        //this.baseElement.remove()
-        this.parent.removeChild(this.baseElement)
     }
 
     runWbWorkerForUpdateElement() {

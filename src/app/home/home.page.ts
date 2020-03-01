@@ -94,25 +94,27 @@ export class HomePage implements AfterViewInit {
 
   startGame() {
     if (!this.startTime) {
-      this.startTime = (new Date).getMilliseconds()
+      this.startTime = Date.now()
     }
     if (this.modelLoaded == 1) {
       this.hasGameStarted = true
       this.isGamePaused = false
       //console.log(this.components)
+      //debugger;
       if (this.components.length) {
         this.components.map(c => {
-          c.destroyComponent()
-          setTimeout(() => {
-            c = null
-          });
+          c = null
+        })
+        let els = document.getElementsByClassName("obstacles")
+        Array.from(els).forEach(el=>{
+          el.parentNode.removeChild(el)
         })
       }
       this.components = []
       this.startTime = null
       this.createComponents()
     } else {
-      if (((new Date).getMilliseconds() - this.startTime) > 10000) {
+      if ((Date.now() - this.startTime) > 10000) {
         alert("Sorry, your connection is too slow.")
       } else {
         if (this.modelLoaded == 0) {
@@ -142,12 +144,12 @@ export class HomePage implements AfterViewInit {
         scores = Array.from(scores).map((s, i) => ({ score: s, word: words[i] }));
         // Find the most probable word.
         scores.sort((s1, s2) => s2.score - s1.score);
-        //console.log(scores[0])
+        //console.log(scores[0].word)
         //console.log(word)
         if (this.hasGameStarted && scores[0].score > .9) {
           this.gameActivity(scores[0].word)
         }
-      }, { probabilityThreshold: 0.5 })
+      }, { probabilityThreshold: .75 })
     } catch {
       this.modelLoaded = 2
     }
@@ -159,7 +161,7 @@ export class HomePage implements AfterViewInit {
 
   gameActivity(direction: string) {
     //console.log(this.expression)
-    if (direction == 'up' && !this.inTransition) {
+    if ((direction == 'up' || direction == 'stop') && !this.inTransition) {
       //console.log(v)
       this.phase = "bouncing"
       this.inTransition = true
@@ -168,7 +170,7 @@ export class HomePage implements AfterViewInit {
         this.inTransition = false
         this.phase = "normal"
       }, 2000);
-    } else if (direction == 'down' && !this.inTransition) {
+    } else if ((direction == 'down' || direction == 'nine') && !this.inTransition) {
       //console.log(v)
       this.phase = "ducking"
       this.inTransition = true
