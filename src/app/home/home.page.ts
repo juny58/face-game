@@ -162,7 +162,7 @@ export class HomePage implements AfterViewInit {
 
   gameActivity(direction: string) {
     //console.log(this.expression)
-    if ((direction == 'up') && !this.inTransition) {
+    if ((direction == 'up' || direction == 'stop') && !this.inTransition) { // they sound similar
       //console.log(v)
       this.phase = "bouncing"
       this.inTransition = true
@@ -171,7 +171,7 @@ export class HomePage implements AfterViewInit {
         this.inTransition = false
         this.phase = "normal"
       }, 2000);
-    } else if ((direction == 'down') && !this.inTransition) {
+    } else if ((direction == 'down' || direction == 'nine') && !this.inTransition) { // they sound similar
       //console.log(v)
       this.phase = "ducking"
       this.inTransition = true
