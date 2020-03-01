@@ -1,5 +1,5 @@
 import { Component, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
-import { interval,Subscription } from 'rxjs';
+import { interval, Subscription } from 'rxjs';
 import { Obstacle, GameOverEvent } from './obstacle';
 import { Platform } from '@ionic/angular';
 import { Diagnostic } from '@ionic-native/diagnostic/ngx';
@@ -139,19 +139,18 @@ export class HomePage implements AfterViewInit {
     this.recognizer = speechCommands.create('BROWSER_FFT');
     try {
       await this.recognizer.ensureModelLoaded();
-      let words = this.recognizer.wordLabels()
-      //console.log(words)
       this.modelLoaded = 1
+      let listenerWorker = new Worker("./listener.worker.ts", { type: 'module' })
       this.recognizer.listen(({ scores }) => {
-        scores = Array.from(scores).map((s, i) => ({ score: s, word: words[i] }));
-        // Find the most probable word.
-        scores.sort((s1, s2) => s2.score - s1.score);
-        //console.log(scores[0].word)
-        //console.log(word)
-        if (this.hasGameStarted && scores[0].score > .9) {
-          this.gameActivity(scores[0].word)
-        }
+        listenerWorker.postMessage(scores)
       }, { probabilityThreshold: .75 })
+      
+      listenerWorker.onmessage = ({ data }) => {
+        console.log(data)
+        if (this.hasGameStarted) {
+          this.gameActivity(data)
+        }
+      }
     } catch {
       this.modelLoaded = 2
     }
@@ -163,7 +162,7 @@ export class HomePage implements AfterViewInit {
 
   gameActivity(direction: string) {
     //console.log(this.expression)
-    if ((direction == 'up' || direction == 'stop') && !this.inTransition) {
+    if ((direction == 'up') && !this.inTransition) {
       //console.log(v)
       this.phase = "bouncing"
       this.inTransition = true
@@ -172,7 +171,7 @@ export class HomePage implements AfterViewInit {
         this.inTransition = false
         this.phase = "normal"
       }, 2000);
-    } else if ((direction == 'down' || direction == 'nine') && !this.inTransition) {
+    } else if ((direction == 'down') && !this.inTransition) {
       //console.log(v)
       this.phase = "ducking"
       this.inTransition = true

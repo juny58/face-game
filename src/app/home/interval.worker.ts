@@ -1,14 +1,18 @@
 import { interval } from "rxjs";
-
+let intervalObserver
+let intervalSubscriber
 /// <reference lib="webworker" />
 
 addEventListener('message', ({ data }) => {
+  //console.log(data)
   if (typeof data == 'number') {
-    var intervalObserver = interval(data)
-    var intervalSubscriber = intervalObserver.subscribe(() => {
+    intervalObserver = interval(data)
+    intervalSubscriber = intervalObserver.subscribe(() => {
       postMessage(null);
     })
   } else {
-    intervalSubscriber.unsubscribe()
+    if (intervalSubscriber) {
+      intervalSubscriber.unsubscribe()
+    }
   }
 });

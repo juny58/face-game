@@ -41,7 +41,7 @@ export class Obstacle {
             this.baseElement.style.right = `${this.rightOffset}px`
             let left = window.innerWidth - (this.rightOffset + 30)
             if (this.obstacleType == 'top') {
-                if (left < 90 && (this.obstacleOffsetTop - 20) >= this.playerElement.offsetTop) { // 10px buffer distance as img has about 10px padding
+                if (left < 90 && left > 10 && (this.obstacleOffsetTop - 20) >= this.playerElement.offsetTop) { // 10px buffer distance as img has about 10px padding
                     //console.log("Yaaayy!! Collision...")
                     //console.log(this.playerElement.offsetTop)
                     this.gameOverCallBack({ isGameOver: true })
@@ -49,7 +49,7 @@ export class Obstacle {
                     this.worker.terminate()
                 }
             } else {
-                if (left < 90 && (this.obstacleOffsetTop + 20) <= (this.playerElement.offsetTop + 100)) { // 10px buffer distance as img has about 10px padding
+                if (left < 90 && left > 10 && (this.obstacleOffsetTop + 20) <= (this.playerElement.offsetTop + 100)) { // 10px buffer distance as img has about 10px padding
                     //console.log("Yaaayy!! Collision...")
                     //console.log(this.playerElement.offsetTop)
                     this.gameOverCallBack({ isGameOver: true })
