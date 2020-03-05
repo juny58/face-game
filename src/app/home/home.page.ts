@@ -104,6 +104,7 @@ export class HomePage implements AfterViewInit {
   }
 
   gameProcess() {
+    this.isGameOver = false
     this.modelNotLoadedShowSpinner = false
     this.hasGameStarted = true
     this.isGamePaused = false
