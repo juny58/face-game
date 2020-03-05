@@ -194,13 +194,13 @@ export class HomePage implements AfterViewInit {
     let offset = 0
     let hitOffset = false
     let int = interval(20).subscribe(() => {
-      if (offset < 100 && !hitOffset) {
+      if (offset < 108 && !hitOffset) {
         offset += 4
-        if (offset == 100) {
+        if (offset == 108) {
           hitOffset = true
         }
       } else {
-        offset -= 2
+        offset -= 3
         if (offset == 0) {
           int.unsubscribe()
         }
@@ -213,13 +213,13 @@ export class HomePage implements AfterViewInit {
     let offset = 0
     let hitOffset = false
     let int = interval(20).subscribe(() => {
-      if (offset > -100 && !hitOffset) {
+      if (offset > -108 && !hitOffset) {
         offset -= 4
-        if (offset == -100) {
+        if (offset == -108) {
           hitOffset = true
         }
       } else {
-        offset += 2
+        offset += 3
       }
       //console.log(offset, document.getElementById('player').offsetTop)
       this.setCurrentPlayerPositionCssVariable(`${offset}px`)
