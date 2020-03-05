@@ -20,11 +20,13 @@
     <img id="player" [class]="phase" [src]="imgSrc[phase]" alt="">
   </div>
 
-  <div class="score">
+  <div *ngIf="!isGameOver" class="score">
     <b class="score-label">Score:</b><span class="score-number">{{score}}</span>
   </div>
 
   <div *ngIf="!hasGameStarted" id="busted-area">
+    <h1 *ngIf="isGameOver" class="busted-score">SCORE: {{score}}</h1>
+
     <h1 *ngIf="isGameOver" id="busted-text">Wasted !!</h1>
     <div class="restart">
       <svg class="circle-svg">
@@ -34,7 +36,13 @@
       </svg>
       <ion-icon (click)="startGame()" name="triangle" class="play-button"></ion-icon>
     </div>
+
+    <div class="setting" (click)="showRule()">
+      <ion-icon name="settings"></ion-icon><span style="vertical-align: top;">&nbsp;Rules</span>
+    </div>
   </div>
-  <!-- <ion-icon (click)="expression='happy'; gameActivity(.8)" class="up controllers" name="arrow-up"></ion-icon>
-  <ion-icon (click)="expression='angry'; gameActivity(.8)" class="down controllers" name="arrow-down"></ion-icon> -->
+
+  <div *ngIf="modelNotLoadedShowSpinner" class="model-loading-container">
+    <div class="model-loader">Slow network, AI Loading...</div>
+  </div>
 </ion-content>

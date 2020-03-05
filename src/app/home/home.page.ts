@@ -33,11 +33,11 @@ export class HomePage implements AfterViewInit {
   lastCreatedTime: Date
   isAndroid = false
   recognizer
-  modelLoaded: ModelLoaded = 0
+  modelLoaded: boolean = false
   score: number = 0
+  modelNotLoadedShowSpinner: boolean = false
 
   @ViewChild("video", { read: ElementRef, static: true }) videoElement: ElementRef
-  startTime: number;
 
   constructor(public splashScreen: SplashScreen, public elementRef: ElementRef, public platform: Platform, public diagnostic: Diagnostic, public screenOrientation: ScreenOrientation) {
     this.platform.ready().then(() => {
@@ -93,41 +93,34 @@ export class HomePage implements AfterViewInit {
     })
   }
 
-  startGame() {
-    if (!this.startTime) {
-      this.startTime = Date.now()
-    }
-    if (this.modelLoaded == 1) {
-      this.hasGameStarted = true
-      this.isGamePaused = false
-      //console.log(this.components)
-      //debugger;
-      if (this.components.length) {
-        this.components.map(c => {
-          c = null
-        })
-        let els = document.getElementsByClassName("obstacles")
-        Array.from(els).forEach(el => {
-          el.parentNode.removeChild(el)
-        })
-      }
-      this.components = []
-      this.startTime = null
-      this.score = 0
-      this.createComponents()
+  async startGame() {
+    if (this.modelLoaded) {
+      this.gameProcess()
     } else {
-      if ((Date.now() - this.startTime) > 10000) {
-        alert("Sorry, your connection is too slow.")
-      } else {
-        if (this.modelLoaded == 0) {
-          setTimeout(() => {
-            this.startGame()
-          }, 100);
-        } else {
-          alert("Sorry, your connection is too slow.")
-        }
-      }
+      this.modelNotLoadedShowSpinner = true
+      await this.listenForCommands()
+      this.gameProcess()
     }
+  }
+
+  gameProcess() {
+    this.modelNotLoadedShowSpinner = false
+    this.hasGameStarted = true
+    this.isGamePaused = false
+    //console.log(this.components)
+    //debugger;
+    if (this.components.length) {
+      this.components.map(c => {
+        c = null
+      })
+      let els = document.getElementsByClassName("obstacles")
+      Array.from(els).forEach(el => {
+        el.parentNode.removeChild(el)
+      })
+    }
+    this.components = []
+    this.score = 0
+    this.createComponents()
   }
 
   ngAfterViewInit() {
@@ -140,12 +133,12 @@ export class HomePage implements AfterViewInit {
     try {
       await this.recognizer.ensureModelLoaded();
       //console.log(this.recognizer.wordLabels())
-      this.modelLoaded = 1
+      this.modelLoaded = true
       let listenerWorker = new Worker("./listener.worker.ts", { type: 'module' })
       this.recognizer.listen(({ scores }) => {
         listenerWorker.postMessage(scores)
       }, { probabilityThreshold: .75 })
-      
+
       listenerWorker.onmessage = ({ data }) => {
         console.log(data)
         if (this.hasGameStarted) {
@@ -153,7 +146,7 @@ export class HomePage implements AfterViewInit {
         }
       }
     } catch {
-      this.modelLoaded = 2
+      this.modelLoaded = false
     }
   }
 
@@ -309,10 +302,8 @@ export class HomePage implements AfterViewInit {
     this.obstacleWorker.postMessage(this.obstacleCreateTimeGap);
   }
 
-}
+  showRule() {
+    alert("Say 'up' to jump and 'down' to duck.\nPlease use microphone for better result.")
+  }
 
-export enum ModelLoaded {
-  "NotFailed" = 0,
-  "Loaded" = 1,
-  "LoadFailed" = 2
 }
