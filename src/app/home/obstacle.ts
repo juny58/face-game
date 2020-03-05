@@ -35,7 +35,7 @@ export class Obstacle {
 
     updateElement() {
         //this.updateAreaSubscription = this.updateArea.subscribe(() => {
-        this.rightOffset += 4
+        this.rightOffset += 2
         //console.log(this.playerElement.offsetHeight, this.playerElement.offsetLeft)
         if (this.rightOffset <= window.innerWidth) {
             this.baseElement.style.right = `${this.rightOffset}px`
@@ -89,7 +89,7 @@ export class Obstacle {
             //console.log(`page got message: ${data}`);
             this.updateElement()
         };
-        this.worker.postMessage(20);
+        this.worker.postMessage(10);
     }
 }
 
