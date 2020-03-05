@@ -10,40 +10,28 @@ import { Router } from '@angular/router';
 export class LoginPage implements OnInit, AfterViewInit {
 
   phone: number
-  receivedOtp: string
-  otpSent: boolean
-  recaptchaVerifier
-  confirmationResult
+  spinNow
+
 
   constructor(public router: Router) { }
 
   ngOnInit() { }
 
-  ngAfterViewInit() {
-    this.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('sign-in-button', {
-      'size': 'invisible'
-    });
-  }
+  ngAfterViewInit() { }
 
-  signIn() {
-    let mobile = '+91' + this.phone
-    firebase.auth().signInWithPhoneNumber(mobile, this.recaptchaVerifier)
-      .then((confirmationResult) => {
-        // SMS sent. Prompt user to type the code from the message, then sign the
-        // user in with confirmationResult.confirm(code).
-        this.otpSent = true
-        this.confirmationResult = confirmationResult;
-        this.phone = null
-      }).catch((error) => {
-        // Error; SMS not sent
-        // ...
-        console.log(error);
-      });
-  }
-
-  verify() {
-    this.confirmationResult.confirm(this.receivedOtp).then((user) => {
-      localStorage.setItem("currentUser", JSON.stringify(user))
+  proceed() {
+    if(!this.phone){
+      return alert("No phone number given")
+    }
+    if (this.phone.toString().length != 10) {
+      return alert("Wrong phone number.")
+    }
+    this.spinNow = true
+    firebase.firestore().collection('user').add({
+      phone: Number(this.phone)
+    }).then(() => {
+      this.spinNow = false
+      localStorage.setItem("currentUser", this.phone.toString())
       this.router.navigate(['/home'], { replaceUrl: true })
     })
   }

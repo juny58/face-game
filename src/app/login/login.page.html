@@ -1,10 +1,10 @@
 <ion-content>
-  <div class="send-otp otp" *ngIf="!otpSent">
+  <div class="send-otp otp">
     <ion-input name=phone [(ngModel)]="phone" placeholder="Mobile No." type="tel"></ion-input><br>
-    <ion-button (click)="signIn()" id="sign-in-button">Send OTP</ion-button>
+    <ion-button color="tertiary" (click)="proceed()" id="sign-in-button">Proceed</ion-button>
   </div>
-  <div class="rcv-otp otp" *ngIf="otpSent">
-    <ion-input [(ngModel)]="receivedOtp" placeholder="Your OTP" type="text"></ion-input><br>
-    <ion-button (click)="verify()">Submit OTP</ion-button>
+
+  <div class="spinner" *ngIf="spinNow">
+    <ion-spinner color="primary"></ion-spinner>
   </div>
 </ion-content>

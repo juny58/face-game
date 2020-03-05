@@ -8,3 +8,9 @@
 ion-button {
     width: 100%;
 }
+.spinner {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translateX(-50%);
+}
